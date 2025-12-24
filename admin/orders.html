@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>订单管理</title>
+  <style>
+    body{font-family:Arial,"Microsoft YaHei",sans-serif;background:#f5f6fa;margin:0;padding:24px;}
+    .top{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:14px;}
+    h2{margin:0;color:#333;}
+    button{
+      padding:9px 12px;border:none;border-radius:8px;background:#4b7bec;color:#fff;cursor:pointer;
+    }
+    button:hover{background:#3867d6;}
+    .ghost{background:#fff;color:#4b7bec;border:1px solid #cbd6ff;}
+    .ghost:hover{background:#eef2ff;}
+    table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;}
+    th,td{padding:12px;border-bottom:1px solid #eee;text-align:center;}
+    th{background:#4b7bec;color:#fff;}
+    select{padding:7px 8px;border-radius:7px;border:1px solid #ddd;}
+  </style>
+</head>
+<body>
+  <div class="top">
+    <h2>订单管理</h2>
+    <div style="display:flex;gap:10px;">
+      <button class="ghost" onclick="location.href='products.html'">返回商品管理</button>
+      <button class="ghost" onclick="location.href='login.html'">退出</button>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>订单号</th><th>用户</th><th>金额</th><th>状态</th><th>操作</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+
+  <script>
+    const orders = [
+      {no:"OD2025001", user:"张三", amount:199, status:"待支付"},
+      {no:"OD2025002", user:"李四", amount:59,  status:"已支付"},
+      {no:"OD2025003", user:"王五", amount:129, status:"已发货"},
+    ];
+    const statuses = ["待支付","已支付","已发货","已完成"];
+
+    function render(){
+      const tbody = document.getElementById("tbody");
+      tbody.innerHTML = orders.map((o,i)=>`
+        <tr>
+          <td>${o.no}</td>
+          <td>${o.user}</td>
+          <td>¥${o.amount}</td>
+          <td>
+            <select id="st_${i}">
+              ${statuses.map(s=>`<option ${s===o.status?"selected":""}>${s}</option>`).join("")}
+            </select>
+          </td>
+          <td>
+            <button onclick="save(${i})">保存状态</button>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    function save(i){
+      const v = document.getElementById("st_"+i).value;
+      orders[i].status = v;
+      alert("订单状态已更新（演示）："+ orders[i].no + " -> " + v);
+    }
+
+    render();
+  </script>
+</body>
+</html>

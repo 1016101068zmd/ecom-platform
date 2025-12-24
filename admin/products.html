@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>商品管理</title>
+  <style>
+    body{font-family:Arial,"Microsoft YaHei",sans-serif;background:#f5f6fa;margin:0;padding:24px;}
+    .top{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:14px;}
+    h2{margin:0;color:#333;}
+    .actions{display:flex;gap:10px;align-items:center;}
+    input{
+      padding:9px 10px;border:1px solid #ddd;border-radius:8px;outline:none;min-width:220px;
+    }
+    input:focus{border-color:#4b7bec;}
+    button{
+      padding:9px 12px;border:none;border-radius:8px;background:#4b7bec;color:#fff;cursor:pointer;
+    }
+    button:hover{background:#3867d6;}
+    .ghost{background:#fff;color:#4b7bec;border:1px solid #cbd6ff;}
+    .ghost:hover{background:#eef2ff;}
+    table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;}
+    th,td{padding:12px;border-bottom:1px solid #eee;text-align:center;}
+    th{background:#4b7bec;color:#fff;}
+    .op button{padding:6px 10px;border-radius:7px;}
+    .danger{background:#eb3b5a;}
+    .danger:hover{background:#c92a46;}
+    a{color:#4b7bec;text-decoration:none;}
+  </style>
+</head>
+<body>
+  <div class="top">
+    <h2>商品管理</h2>
+    <div class="actions">
+      <input id="kw" placeholder="搜索商品名（演示：前端过滤）" />
+      <button id="addBtn">新增商品</button>
+      <button class="ghost" onclick="location.href='orders.html'">去订单管理</button>
+      <button class="ghost" onclick="location.href='login.html'">退出</button>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th><th>商品名</th><th>价格</th><th>库存</th><th>操作</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+
+  <script>
+    let products = [
+      {id:1,name:"示例商品 A",price:99,stock:20},
+      {id:2,name:"示例商品 B",price:129,stock:12},
+      {id:3,name:"示例商品 C",price:59,stock:50},
+    ];
+
+    function render(list){
+      const tbody = document.getElementById("tbody");
+      tbody.innerHTML = list.map(p => `
+        <tr>
+          <td>${p.id}</td>
+          <td>${p.name}</td>
+          <td>¥${p.price}</td>
+          <td>${p.stock}</td>
+          <td class="op">
+            <button onclick="edit(${p.id})">编辑</button>
+            <button class="danger" onclick="del(${p.id})">删除</button>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    function edit(id){ alert("编辑商品（演示）ID=" + id); }
+    function del(id){
+      if(confirm("确认删除商品 ID=" + id + " 吗？（演示）")){
+        products = products.filter(p => p.id !== id);
+        render(products);
+      }
+    }
+
+    document.getElementById("addBtn").addEventListener("click", () => {
+      const name = prompt("输入商品名（演示）");
+      if(!name) return;
+      products.push({id:Date.now(), name, price:99, stock:10});
+      render(products);
+    });
+
+    document.getElementById("kw").addEventListener("input", (e) => {
+      const kw = e.target.value.trim();
+      const list = kw ? products.filter(p => p.name.includes(kw)) : products;
+      render(list);
+    });
+
+    render(products);
+  </script>
+</body>
+</html>
