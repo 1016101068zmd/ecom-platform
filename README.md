@@ -32,6 +32,8 @@ An e-commerce platform supporting user login, product browsing, cart, checkout, 
 公共组件（导航栏、商品卡片、分页/加载、提示）
 按接口文档对接后端 API
 页面表单校验与基础异常提示
+首先完成登录注册界面并且预留好跳转接口
+其次完成商品列表的导航栏和主界面的网页
 
 成员 C：后台管理端（admin-panel）
 管理员登录与权限区分
