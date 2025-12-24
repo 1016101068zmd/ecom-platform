@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>用户注册</title>
+
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #fcefee, #e8f3ff);
+      font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+    .card {
+      width: 380px;
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    h2 {
+      text-align: center;
+      color: #6b6b6b;
+      margin-bottom: 24px;
+    }
+
+    .input-group {
+      margin-bottom: 16px;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 6px;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .input-group input:focus {
+      border-color: #f3a6b1;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 12px;
+      background: #f3a6b1;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .btn:hover {
+      background: #ee8e9c;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 16px;
+      font-size: 13px;
+      color: #999;
+    }
+
+    .footer a {
+      color: #f3a6b1;
+      text-decoration: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="card">
+    <h2>用户注册</h2>
+
+    <div class="input-group">
+      <label>用户名</label>
+      <input type="text" placeholder="请输入用户名" />
+    </div>
+
+    <div class="input-group">
+      <label>邮箱</label>
+      <input type="email" placeholder="请输入邮箱" />
+    </div>
+
+    <div class="input-group">
+      <label>密码</label>
+      <input type="password" placeholder="请输入密码" />
+    </div>
+
+    <div class="input-group">
+      <label>确认密码</label>
+      <input type="password" placeholder="请再次输入密码" />
+    </div>
+
+    <button class="btn">注册</button>
+
+    <div class="footer">
+      已有账号？<a href="login.html">去登录</a>
+    </div>
+  </div>
+</body>
+</html>
