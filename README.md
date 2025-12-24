@@ -2,6 +2,8 @@
 An e-commerce platform supporting user login, product browsing, cart, checkout, and admin management, built by a three-person team.
 一个三人协作的电子商务平台课程项目，包含用户端商城与后台管理端，覆盖电商基础流程：商品浏览、购物车、下单与订单管理、后台商品与订单维护。
 
+技术栈：后端 Node.js + Express（或 Nest）+ MySQL，前端 Vue3/React + Axios + UI 库，接口风格 REST，
+
 主要功能
 用户端（前台）
 用户注册/登录
@@ -14,7 +16,8 @@ An e-commerce platform supporting user login, product browsing, cart, checkout, 
 管理员登录（可与普通用户做简单角色区分）
 商品管理：新增/编辑/上下架/删除、库存与价格调整
 订单管理：查看订单、修改订单状态（如：待支付/已支付/已发货/已完成/已取消）
-
+核心业务流程说明：用户登录→浏览商品→加入购物车→创建订单→模拟支付→订单状态流转
+关键技术点与非功能设计：JWT 登录鉴权、角色区分（user/admin）、统一接口返回格式、基础参数校验和异常处理
 
 项目分工
 三人代码工作量尽量均衡，模块边界清晰，可通过 Git 提交记录证明贡献。
