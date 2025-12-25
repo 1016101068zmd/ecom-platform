@@ -25,6 +25,7 @@
     }
     button:hover{background:#3867d6;}
     .tip{margin-top:10px;text-align:center;color:#888;font-size:12px;}
+    .error{margin-top:8px;color:#e74c3c;font-size:12px;text-align:center;min-height:16px;}
   </style>
 </head>
 <body>
@@ -33,21 +34,47 @@
 
     <div class="row">
       <label>管理员账号</label>
-      <input id="adminUser" type="text" placeholder="请输入账号" />
+      <input id="adminUser" type="text" placeholder="账号：admin" />
     </div>
 
     <div class="row">
       <label>密码</label>
-      <input id="adminPass" type="password" placeholder="请输入密码" />
+      <input id="adminPass" type="password" placeholder="密码：123456" />
     </div>
 
     <button id="loginBtn" type="button">登录</button>
-    <div class="tip">演示版：点击登录会进入商品管理页</div>
+    <div class="error" id="errorBox"></div>
+    <div class="tip">演示版账号：admin / 123456</div>
   </div>
 
   <script>
+    const USER = "admin";
+    const PASS = "123456";
+
+    // 若已登录，直接跳后台
+    if (localStorage.getItem("admin_logged") === "1") {
+      location.href = "products.html";
+    }
+
     document.getElementById("loginBtn").addEventListener("click", () => {
-      alert("后台登录成功（演示）");
+      const u = (document.getElementById("adminUser").value || "").trim();
+      const p = (document.getElementById("adminPass").value || "").trim();
+      const errBox = document.getElementById("errorBox");
+
+      if (!u || !p) {
+        errBox.textContent = "请输入账号和密码";
+        return;
+      }
+      if (u !== USER || p !== PASS) {
+        errBox.textContent = "账号或密码错误（演示）";
+        return;
+      }
+
+      // 登录成功
+      localStorage.setItem("admin_logged", "1");
+      localStorage.setItem("admin_name", u);
+      errBox.textContent = "";
+      alert("登录成功");
       location.href = "products.html";
     });
   </script>

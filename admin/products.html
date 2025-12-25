@@ -7,11 +7,12 @@
     body{font-family:Arial,"Microsoft YaHei",sans-serif;background:#f5f6fa;margin:0;padding:24px;}
     .top{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:14px;}
     h2{margin:0;color:#333;}
-    .actions{display:flex;gap:10px;align-items:center;}
-    input{
-      padding:9px 10px;border:1px solid #ddd;border-radius:8px;outline:none;min-width:220px;
+    .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+    input,select{
+      padding:9px 10px;border:1px solid #ddd;border-radius:8px;outline:none;min-width:160px;
+      background:#fff;
     }
-    input:focus{border-color:#4b7bec;}
+    input:focus,select:focus{border-color:#4b7bec;}
     button{
       padding:9px 12px;border:none;border-radius:8px;background:#4b7bec;color:#fff;cursor:pointer;
     }
@@ -19,79 +20,192 @@
     .ghost{background:#fff;color:#4b7bec;border:1px solid #cbd6ff;}
     .ghost:hover{background:#eef2ff;}
     table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;}
-    th,td{padding:12px;border-bottom:1px solid #eee;text-align:center;}
+    th,td{padding:12px;border-bottom:1px solid #eee;text-align:center;font-size:14px;}
     th{background:#4b7bec;color:#fff;}
-    .op button{padding:6px 10px;border-radius:7px;}
+    .op button{padding:6px 10px;border-radius:7px;font-size:12px;}
     .danger{background:#eb3b5a;}
     .danger:hover{background:#c92a46;}
-    a{color:#4b7bec;text-decoration:none;}
+    .tag{
+      display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;
+    }
+    .tag.on{background:#e1f5d3;color:#2d7a18;}
+    .tag.off{background:#ffe9e3;color:#c0392b;}
+    .welcome{font-size:13px;color:#666;margin-left:8px;}
   </style>
 </head>
 <body>
+  <script>
+    // 简单登录守卫
+    if (localStorage.getItem("admin_logged") !== "1") {
+      location.href = "login.html";
+    }
+  </script>
+
   <div class="top">
-    <h2>商品管理</h2>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <h2>商品管理</h2>
+      <span class="welcome">当前管理员：<span id="adminName"></span></span>
+    </div>
     <div class="actions">
-      <input id="kw" placeholder="搜索商品名（演示：前端过滤）" />
+      <input id="kw" placeholder="搜索商品名" />
+      <select id="statusFilter">
+        <option value="">全部状态</option>
+        <option value="ON">仅上架</option>
+        <option value="OFF">仅下架</option>
+      </select>
       <button id="addBtn">新增商品</button>
       <button class="ghost" onclick="location.href='orders.html'">去订单管理</button>
-      <button class="ghost" onclick="location.href='login.html'">退出</button>
+      <button class="ghost" id="logoutBtn">退出登录</button>
     </div>
   </div>
 
   <table>
     <thead>
       <tr>
-        <th>ID</th><th>商品名</th><th>价格</th><th>库存</th><th>操作</th>
+        <th>ID</th><th>商品名</th><th>分类</th><th>价格</th><th>库存</th><th>状态</th><th>操作</th>
       </tr>
     </thead>
     <tbody id="tbody"></tbody>
   </table>
 
   <script>
-    let products = [
-      {id:1,name:"示例商品 A",price:99,stock:20},
-      {id:2,name:"示例商品 B",price:129,stock:12},
-      {id:3,name:"示例商品 C",price:59,stock:50},
-    ];
+    const STORAGE_KEY_PRODUCTS = "admin_products";
 
-    function render(list){
-      const tbody = document.getElementById("tbody");
+    function loadProducts() {
+      const raw = localStorage.getItem(STORAGE_KEY_PRODUCTS);
+      if (raw) {
+        try { return JSON.parse(raw); } catch {}
+      }
+      const init = [
+        {id:1,name:"示例商品 A",category:"数码",price:99,stock:20,status:"ON"},
+        {id:2,name:"示例商品 B",category:"家居",price:129,stock:12,status:"ON"},
+        {id:3,name:"示例商品 C",category:"零食",price:59,stock:50,status:"OFF"},
+      ];
+      localStorage.setItem(STORAGE_KEY_PRODUCTS, JSON.stringify(init));
+      return init;
+    }
+
+    function saveProducts(list) {
+      localStorage.setItem(STORAGE_KEY_PRODUCTS, JSON.stringify(list));
+    }
+
+    let products = loadProducts();
+    const tbody = document.getElementById("tbody");
+    const kwInput = document.getElementById("kw");
+    const statusFilter = document.getElementById("statusFilter");
+
+    document.getElementById("adminName").textContent = localStorage.getItem("admin_name") || "admin";
+
+    function filteredProducts() {
+      const kw = kwInput.value.trim();
+      const st = statusFilter.value;
+      return products.filter(p => {
+        if (kw && !p.name.includes(kw)) return false;
+        if (st && p.status !== st) return false;
+        return true;
+      });
+    }
+
+    function render() {
+      const list = filteredProducts();
       tbody.innerHTML = list.map(p => `
         <tr>
           <td>${p.id}</td>
           <td>${p.name}</td>
+          <td>${p.category || "-"}</td>
           <td>¥${p.price}</td>
           <td>${p.stock}</td>
+          <td>
+            <span class="tag ${p.status === "ON" ? "on" : "off"}">
+              ${p.status === "ON" ? "上架" : "下架"}
+            </span>
+          </td>
           <td class="op">
-            <button onclick="edit(${p.id})">编辑</button>
-            <button class="danger" onclick="del(${p.id})">删除</button>
+            <button onclick="editProduct(${p.id})">编辑</button>
+            <button onclick="toggleStatus(${p.id})">${p.status === "ON" ? "下架" : "上架"}</button>
+            <button class="danger" onclick="delProduct(${p.id})">删除</button>
           </td>
         </tr>
       `).join("");
     }
 
-    function edit(id){ alert("编辑商品（演示）ID=" + id); }
-    function del(id){
-      if(confirm("确认删除商品 ID=" + id + " 吗？（演示）")){
-        products = products.filter(p => p.id !== id);
-        render(products);
-      }
+    function editProduct(id) {
+      const p = products.find(x => x.id === id);
+      if (!p) return;
+
+      const name = prompt("商品名：", p.name);
+      if (!name) return;
+
+      const cat = prompt("分类：", p.category || "");
+      if (cat === null) return;
+
+      const priceStr = prompt("价格（元）：", String(p.price));
+      if (priceStr === null) return;
+      const price = Number(priceStr);
+      if (isNaN(price) || price <= 0) { alert("价格不合法"); return; }
+
+      const stockStr = prompt("库存：", String(p.stock));
+      if (stockStr === null) return;
+      const stock = Number(stockStr);
+      if (isNaN(stock) || stock < 0) { alert("库存不合法"); return; }
+
+      const status = prompt("状态：输入 1=上架，2=下架", p.status === "ON" ? "1" : "2");
+      if (status === null) return;
+      const st = status === "1" ? "ON" : "OFF";
+
+      p.name = name.trim();
+      p.category = cat.trim();
+      p.price = price;
+      p.stock = stock;
+      p.status = st;
+
+      saveProducts(products);
+      render();
+    }
+
+    function toggleStatus(id) {
+      const p = products.find(x => x.id === id);
+      if (!p) return;
+      p.status = p.status === "ON" ? "OFF" : "ON";
+      saveProducts(products);
+      render();
+    }
+
+    function delProduct(id) {
+      const p = products.find(x => x.id === id);
+      if (!p) return;
+      if (!confirm(`确认删除商品「${p.name}」吗？`)) return;
+      products = products.filter(x => x.id !== id);
+      saveProducts(products);
+      render();
     }
 
     document.getElementById("addBtn").addEventListener("click", () => {
-      const name = prompt("输入商品名（演示）");
-      if(!name) return;
-      products.push({id:Date.now(), name, price:99, stock:10});
-      render(products);
+      const name = prompt("新商品名称：");
+      if (!name) return;
+      const cat = prompt("分类：","其他") || "其他";
+      const price = Number(prompt("价格（元）：","99") || "0");
+      if (isNaN(price) || price <= 0) { alert("价格不合法"); return; }
+      const stock = Number(prompt("库存：","10") || "0");
+      if (isNaN(stock) || stock < 0) { alert("库存不合法"); return; }
+
+      const id = Date.now();
+      products.push({id, name:name.trim(), category:cat.trim(), price, stock, status:"ON"});
+      saveProducts(products);
+      render();
     });
 
-    document.getElementById("kw").addEventListener("input", (e) => {
-      const kw = e.target.value.trim();
-      const list = kw ? products.filter(p => p.name.includes(kw)) : products;
-      render(list);
+    kwInput.addEventListener("input", render);
+    statusFilter.addEventListener("change", render);
+
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      if (confirm("确认退出登录吗？")) {
+        localStorage.removeItem("admin_logged");
+        location.href = "login.html";
+      }
     });
 
-    render(products);
+    render();
   </script>
 </body>
 </html>
