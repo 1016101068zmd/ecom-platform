@@ -1,0 +1,75 @@
+* {
+  box-sizing: border-box;
+  font-family: "Segoe UI", "PingFang SC", sans-serif;
+}
+
+body {
+  margin: 0;
+  height: 100vh;
+  background: linear-gradient(135deg, #fde2e4, #e0f4ff);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.card {
+  width: 360px;
+  background: #fff;
+  border-radius: 18px;
+  padding: 32px;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+}
+
+h2 {
+  text-align: center;
+  color: #6b7280;
+  margin-bottom: 24px;
+}
+
+.input-group {
+  margin-bottom: 16px;
+}
+
+label {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  outline: none;
+  margin-top: 6px;
+}
+
+input:focus {
+  border-color: #a5b4fc;
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #a5b4fc, #fbcfe8);
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+.tip {
+  text-align: center;
+  margin-top: 16px;
+  font-size: 14px;
+}
+
+.tip a {
+  color: #6366f1;
+  text-decoration: none;
+}
