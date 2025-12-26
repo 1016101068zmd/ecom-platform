@@ -1,75 +1,105 @@
-* {
-  box-sizing: border-box;
-  font-family: "Segoe UI", "PingFang SC", sans-serif;
-}
-
 body {
   margin: 0;
-  height: 100vh;
-  background: linear-gradient(135deg, #fde2e4, #e0f4ff);
+  font-family: "Segoe UI", sans-serif;
+  background: #fafafa;
+}
+
+.navbar {
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: #ffd6e8;
 }
 
-.card {
-  width: 360px;
-  background: #fff;
-  border-radius: 18px;
-  padding: 32px;
-  box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+.logo {
+  font-size: 20px;
+  font-weight: bold;
 }
 
-h2 {
-  text-align: center;
-  color: #6b7280;
-  margin-bottom: 24px;
-}
-
-.input-group {
-  margin-bottom: 16px;
-}
-
-label {
-  font-size: 14px;
-  color: #6b7280;
-}
-
-input {
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid #ddd;
-  outline: none;
-  margin-top: 6px;
-}
-
-input:focus {
-  border-color: #a5b4fc;
-}
-
-button {
-  width: 100%;
-  padding: 12px;
+.search {
+  width: 40%;
+  padding: 6px 10px;
+  border-radius: 20px;
   border: none;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #a5b4fc, #fbcfe8);
-  color: #fff;
-  font-size: 16px;
+}
+
+.nav-btns button {
+  margin-left: 8px;
+  background: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 15px;
   cursor: pointer;
 }
 
-button:hover {
-  opacity: 0.9;
+.welcome {
+  margin-right: 8px;
+  color: #555;
 }
 
-.tip {
+.products {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 40px;
+}
+
+.product {
+  width: 150px;
+  height: 120px;
+  background: #ffeef5;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
+}
+
+.modal-content {
+  width: 300px;
+  background: #fff;
+  border-radius: 20px;
+  padding: 20px;
+  margin: 120px auto;
   text-align: center;
-  margin-top: 16px;
+}
+
+.modal-content input {
+  width: 90%;
+  padding: 8px;
+  margin: 8px 0;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+}
+
+.modal-content button {
+  width: 100%;
+  margin-top: 10px;
+  padding: 8px;
+  background: #ffb6c1;
+  border: none;
+  border-radius: 15px;
+  cursor: pointer;
+}
+
+.switch {
+  margin-top: 10px;
   font-size: 14px;
 }
 
-.tip a {
-  color: #6366f1;
-  text-decoration: none;
+.switch a {
+  color: #ff7aa2;
+  cursor: pointer;
+}
+
+.close {
+  float: right;
+  cursor: pointer;
 }

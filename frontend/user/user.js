@@ -1,51 +1,108 @@
-function getUsers() {
-  return JSON.parse(localStorage.getItem("users") || "[]");
+let mode = "login";
+
+/* 弹窗控制 */
+function openAuth() {
+  document.getElementById("authModal").style.display = "block";
+  updateModal();
 }
 
-function saveUsers(users) {
-  localStorage.setItem("users", JSON.stringify(users));
+function closeAuth() {
+  document.getElementById("authModal").style.display = "none";
 }
 
-/* 注册 */
-function register() {
+function toggleMode() {
+  mode = mode === "login" ? "register" : "login";
+  updateModal();
+}
+
+function updateModal() {
+  const title = document.getElementById("modalTitle");
+  const switchText = document.getElementById("switchText");
+  const switchLink = document.querySelector(".switch a");
+
+  if (mode === "login") {
+    title.innerText = "登录";
+    switchText.innerText = "没有账号？";
+    switchLink.innerText = "注册";
+  } else {
+    title.innerText = "注册";
+    switchText.innerText = "已有账号？";
+    switchLink.innerText = "登录";
+  }
+}
+
+/* 登录 / 注册 */
+function submitAuth() {
   const username = document.getElementById("username").value.trim();
-  const password = document.getElementById("password").value.trim();
+  const password = document.getElementById("password").value;
 
   if (!username || !password) {
-    alert("用户名和密码不能为空");
+    alert("请填写完整信息");
     return;
   }
 
-  const users = getUsers();
-  const exists = users.find(u => u.username === username);
+  let users = JSON.parse(localStorage.getItem("users") || "{}");
 
-  if (exists) {
-    alert("该用户名已存在");
+  if (mode === "register") {
+    if (users[username]) {
+      alert("注册失败：用户名已存在");
+      return;
+    }
+    if (password.length < 8) {
+      alert("注册失败：密码不少于 8 位");
+      return;
+    }
+    users[username] = password;
+    localStorage.setItem("users", JSON.stringify(users));
+    alert("注册成功，请登录");
+    toggleMode();
     return;
   }
 
-  users.push({ username, password });
-  saveUsers(users);
-
-  alert("注册成功，请登录");
-  window.location.href = "login.html";
-}
-
-/* 登录 */
-function login() {
-  const username = document.getElementById("username").value.trim();
-  const password = document.getElementById("password").value.trim();
-
-  const users = getUsers();
-  const user = users.find(
-    u => u.username === username && u.password === password
-  );
-
-  if (!user) {
+  if (users[username] !== password) {
     alert("用户名或密码错误");
     return;
   }
 
-  localStorage.setItem("currentUser", username);
-  alert("登录成功，欢迎 " + username);
+  localStorage.setItem("loginUser", username);
+  closeAuth();
+  showUser();
 }
+
+/* 登录状态显示 */
+function showUser() {
+  const user = localStorage.getItem("loginUser");
+  document.getElementById("welcomeUser").innerText =
+    user ? `你好，${user}` : "";
+}
+
+function checkLogin() {
+  return localStorage.getItem("loginUser");
+}
+
+/* 权限拦截 */
+function goCart() {
+  if (!checkLogin()) {
+    const ok = confirm("该功能需要登录，是否前往登录？");
+    if (ok) {
+      mode = "login";
+      openAuth();
+    }
+    return;
+  }
+  alert("进入购物车（示意）");
+}
+
+function goProfile() {
+  if (!checkLogin()) {
+    const ok = confirm("该功能需要登录，是否前往登录？");
+    if (ok) {
+      mode = "login";
+      openAuth();
+    }
+    return;
+  }
+  alert("进入个人中心（示意）");
+}
+
+window.onload = showUser;

@@ -1,0 +1,50 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>电商首页</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<header class="navbar">
+  <div class="logo">🍰 Shop</div>
+
+  <input class="search" placeholder="搜索商品..." />
+
+  <div class="nav-btns">
+    <span id="welcomeUser" class="welcome"></span>
+    <button onclick="openAuth()">登录 / 注册</button>
+    <button onclick="goProfile()">个人中心</button>
+    <button onclick="goCart()">购物车</button>
+  </div>
+</header>
+
+<section class="products">
+  <div class="product">🍓 草莓蛋糕</div>
+  <div class="product">🍫 巧克力慕斯</div>
+  <div class="product">🍪 曲奇礼盒</div>
+</section>
+
+<!-- 登录 / 注册弹窗 -->
+<div id="authModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeAuth()">×</span>
+    <h2 id="modalTitle">登录</h2>
+
+    <input id="username" placeholder="用户名" />
+    <input id="password" type="password" placeholder="密码" />
+
+    <button onclick="submitAuth()">确认</button>
+
+    <p class="switch">
+      <span id="switchText">没有账号？</span>
+      <a onclick="toggleMode()">注册</a>
+    </p>
+  </div>
+</div>
+
+<script src="user.js"></script>
+</body>
+</html>
