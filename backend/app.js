@@ -67,3 +67,26 @@ app.post('/api/login', async (req, res) => {
 app.listen(3000, () => {
     console.log('Server running on http://localhost:3000');
 });
+
+// 获取所有商品
+app.get('/api/products', async (req, res) => {
+    try {
+        const [rows] = await pool.execute('SELECT * FROM products');
+        res.json(rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 获取单个商品详情
+app.get('/api/products/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const [rows] = await pool.execute('SELECT * FROM products WHERE id=?', [id]);
+        if (rows.length === 0) return res.status(404).json({ error: '商品不存在' });
+        res.json(rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
