@@ -7,34 +7,24 @@
     body{font-family:Arial,"Microsoft YaHei",sans-serif;background:#f5f6fa;margin:0;padding:24px;}
     .top{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;}
     h2{margin:0;color:#333;}
-    button{
-      padding:9px 12px;border:none;border-radius:8px;background:#4b7bec;color:#fff;cursor:pointer;
-    }
+    button{padding:9px 12px;border:none;border-radius:8px;background:#4b7bec;color:#fff;cursor:pointer;}
     button:hover{background:#3867d6;}
     .ghost{background:#fff;color:#4b7bec;border:1px solid #cbd6ff;}
     .ghost:hover{background:#eef2ff;}
     table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;}
     th,td{padding:12px;border-bottom:1px solid #eee;text-align:center;font-size:14px;}
     th{background:#4b7bec;color:#fff;}
-    select,input{
-      padding:7px 8px;border-radius:7px;border:1px solid #ddd;background:#fff;outline:none;
-    }
+    select,input{padding:7px 8px;border-radius:7px;border:1px solid #ddd;background:#fff;outline:none;}
     select:focus,input:focus{border-color:#4b7bec;}
     .filters{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
-    .tag{
-      display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;
-    }
+    .tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;}
     .tag.done{background:#e1f5d3;color:#2d7a18;}
     .tag.cancel{background:#ffe9e3;color:#c0392b;}
   </style>
 </head>
 <body>
-  <script>
-    // 登录守卫
-    if (localStorage.getItem("admin_logged") !== "1") {
-      location.href = "login.html";
-    }
-  </script>
+  <script src="auth.js"></script>
+  <script>AUTH.requireLogin();</script>
 
   <div class="top">
     <h2>订单管理</h2>
@@ -62,11 +52,12 @@
     <tbody id="tbody"></tbody>
   </table>
 
+  <script src="store.js"></script>
+  <script src="ui.js"></script>
   <script>
-    const STORAGE_KEY_ORDERS = "admin_orders";
     const ALL_STATUSES = ["待支付","已支付","已发货","已完成","已取消"];
 
-    // 合法状态流转表
+    // 合法状态流转表（你原来这个很加分，保留）
     const FLOW = {
       "待支付": ["已支付","已取消"],
       "已支付": ["已发货","已取消"],
@@ -75,25 +66,7 @@
       "已取消": []
     };
 
-    function loadOrders() {
-      const raw = localStorage.getItem(STORAGE_KEY_ORDERS);
-      if (raw) {
-        try { return JSON.parse(raw); } catch {}
-      }
-      const init = [
-        {no:"OD2025001", user:"张三", amount:199, status:"待支付"},
-        {no:"OD2025002", user:"李四", amount:59,  status:"已支付"},
-        {no:"OD2025003", user:"王五", amount:129, status:"已发货"},
-      ];
-      localStorage.setItem(STORAGE_KEY_ORDERS, JSON.stringify(init));
-      return init;
-    }
-
-    function saveOrders(list) {
-      localStorage.setItem(STORAGE_KEY_ORDERS, JSON.stringify(list));
-    }
-
-    let orders = loadOrders();
+    let orders = Store.loadOrders();
 
     const tbody = document.getElementById("tbody");
     const kwInput = document.getElementById("kwOrder");
@@ -111,70 +84,74 @@
 
     function render() {
       const list = filteredOrders();
-      tbody.innerHTML = list.map((o, idx) => {
-        const fullIndex = orders.findIndex(x => x.no === o.no); // 为了保存时定位
+      tbody.innerHTML = list.map((o) => {
+        const idx = orders.findIndex(x => x.no === o.no);
         return `
-        <tr>
-          <td>${o.no}</td>
-          <td>${o.user}</td>
-          <td>¥${o.amount}</td>
-          <td>
-            <span class="tag ${
-              o.status === "已完成" ? "done" :
-              o.status === "已取消" ? "cancel" : ""
-            }">
-              ${o.status}
-            </span>
-          </td>
-          <td>
-            <select id="st_${fullIndex}">
-              ${ALL_STATUSES.map(s=>{
-                const canTransition = (s === o.status) || FLOW[o.status].includes(s);
-                return `<option value="${s}" ${s===o.status?"selected":""} ${canTransition?"":"disabled"}>${s}${canTransition?"":" (不可直接跳转)"}</option>`;
-              }).join("")}
-            </select>
-            <button onclick="saveStatus(${fullIndex})">保存状态</button>
-          </td>
-        </tr>`;
+          <tr>
+            <td>${o.no}</td>
+            <td>${o.user}</td>
+            <td>¥${o.amount}</td>
+            <td>
+              <span class="tag ${
+                o.status === "已完成" ? "done" :
+                o.status === "已取消" ? "cancel" : ""
+              }">${o.status}</span>
+            </td>
+            <td>
+              <select data-role="st" data-idx="${idx}">
+                ${ALL_STATUSES.map(s=>{
+                  const can = (s === o.status) || FLOW[o.status].includes(s);
+                  return `<option value="${s}" ${s===o.status?"selected":""} ${can?"":"disabled"}>${s}${can?"":"（不可直接跳）"}</option>`;
+                }).join("")}
+              </select>
+              <button data-role="save" data-idx="${idx}">保存状态</button>
+            </td>
+          </tr>
+        `;
       }).join("");
     }
 
-    function saveStatus(index) {
-      const sel = document.getElementById("st_"+index);
-      if (!sel) return;
-      const newStatus = sel.value;
+    async function saveStatus(index, newStatus) {
       const o = orders[index];
       if (!o) return;
 
       const from = o.status;
-      if (newStatus === from) {
-        alert("状态未变化");
-        return;
-      }
+      if (newStatus === from) return UI.toast("状态未变化");
+
       if (!FLOW[from].includes(newStatus)) {
-        alert("不允许从「"+from+"」直接变为「"+newStatus+"」");
-        sel.value = from;
-        return;
-      }
-      if (!confirm(`确认将订单 ${o.no} 状态由「${from}」改为「${newStatus}」吗？`)) {
-        sel.value = from;
+        UI.toast(`不允许从「${from}」直接变为「${newStatus}」`);
+        render();
         return;
       }
 
+      const ok = await UI.confirmBox(`确认将订单 ${o.no} 状态由「${from}」改为「${newStatus}」吗？`);
+      if (!ok) { render(); return; }
+
       o.status = newStatus;
-      saveOrders(orders);
-      alert("订单状态已更新：" + o.no + " -> " + newStatus);
+      Store.saveOrders(orders);
+      UI.toast(`已更新：${o.no} → ${newStatus}`);
       render();
     }
+
+    tbody.addEventListener("click", (e) => {
+      const btn = e.target.closest("button");
+      if (!btn) return;
+      if (btn.dataset.role !== "save") return;
+
+      const idx = Number(btn.dataset.idx);
+      const sel = tbody.querySelector(`select[data-role="st"][data-idx="${idx}"]`);
+      if (!sel) return;
+      saveStatus(idx, sel.value);
+    });
 
     kwInput.addEventListener("input", render);
     statusFilter.addEventListener("change", render);
 
-    document.getElementById("logoutBtn").addEventListener("click", () => {
-      if (confirm("确认退出登录吗？")) {
-        localStorage.removeItem("admin_logged");
-        location.href = "login.html";
-      }
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      const ok = await UI.confirmBox("确认退出登录吗？");
+      if (!ok) return;
+      AUTH.logout();
+      location.href = "login.html";
     });
 
     render();
