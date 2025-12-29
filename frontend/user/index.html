@@ -2,39 +2,59 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <title>电商首页</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <title>shop</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+<!-- 顶部导航 -->
 <header class="navbar">
-  <div class="logo">🍰 Shop</div>
+  <h1 class="logo">🍰 shop</h1>
 
-  <input class="search" placeholder="搜索商品..." />
+  <input class="search" type="text" placeholder="搜索商品">
 
   <div class="nav-btns">
-    <span id="welcomeUser" class="welcome"></span>
-    <button onclick="openAuth()">登录 / 注册</button>
+    <span id="welcomeUser"></span>
+
+    <button id="loginBtn" onclick="openAuth()">登录 / 注册</shopbutton>
+    <button id="logoutBtn" onclick="logout()" style="display:none;">退出登录</button>
+
     <button onclick="goProfile()">个人中心</button>
     <button onclick="goCart()">购物车</button>
   </div>
 </header>
 
+<!-- 商品区 -->
 <section class="products">
-  <div class="product">🍓 草莓蛋糕</div>
-  <div class="product">🍫 巧克力慕斯</div>
-  <div class="product">🍪 曲奇礼盒</div>
+  <div class="product">
+    <h3>草莓蛋糕</h3>
+    <p>￥39</p>
+    <button onclick="addToCart('草莓蛋糕',39)">加入购物车</button>
+  </div>
+
+  <div class="product">
+    <h3>马卡龙礼盒</h3>
+    <p>￥59</p>
+    <button onclick="addToCart('马卡龙礼盒',59)">加入购物车</button>
+  </div>
+
+  <div class="product">
+    <h3>巧克力甜甜圈</h3>
+    <p>￥19</p>
+    <button onclick="addToCart('巧克力甜甜圈',19)">加入购物车</button>
+  </div>
 </section>
 
-<!-- 登录 / 注册弹窗 -->
+<!-- 登录 / 注册弹窗（保持之前那种） -->
 <div id="authModal" class="modal">
   <div class="modal-content">
-    <span class="close" onclick="closeAuth()">×</span>
     <h2 id="modalTitle">登录</h2>
 
-    <input id="username" placeholder="用户名" />
-    <input id="password" type="password" placeholder="密码" />
+    <input id="username" placeholder="用户名">
+    <input id="password" type="password" placeholder="密码">
+
+    <p id="tip" class="tip"></p>
 
     <button onclick="submitAuth()">确认</button>
 
@@ -42,6 +62,8 @@
       <span id="switchText">没有账号？</span>
       <a onclick="toggleMode()">注册</a>
     </p>
+
+    <span class="close" onclick="closeAuth()">×</span>
   </div>
 </div>
 

@@ -1,108 +1,140 @@
 let mode = "login";
 
-/* 弹窗控制 */
+/* 弹窗控制（老逻辑，不改） */
 function openAuth() {
-  document.getElementById("authModal").style.display = "block";
+  document.getElementById("authModal").style.display = "flex";
+  clearInputs();
   updateModal();
 }
-
 function closeAuth() {
   document.getElementById("authModal").style.display = "none";
 }
-
 function toggleMode() {
   mode = mode === "login" ? "register" : "login";
+  clearInputs();
   updateModal();
 }
-
 function updateModal() {
   const title = document.getElementById("modalTitle");
-  const switchText = document.getElementById("switchText");
-  const switchLink = document.querySelector(".switch a");
+  const text = document.getElementById("switchText");
+  const link = document.querySelector(".switch a");
+  const tip = document.getElementById("tip");
+
+  tip.innerText = "";
 
   if (mode === "login") {
     title.innerText = "登录";
-    switchText.innerText = "没有账号？";
-    switchLink.innerText = "注册";
+    text.innerText = "没有账号？";
+    link.innerText = "注册";
   } else {
     title.innerText = "注册";
-    switchText.innerText = "已有账号？";
-    switchLink.innerText = "登录";
+    text.innerText = "已有账号？";
+    link.innerText = "登录";
   }
 }
 
+
 /* 登录 / 注册 */
 function submitAuth() {
-  const username = document.getElementById("username").value.trim();
-  const password = document.getElementById("password").value;
+  const u = username.value.trim();
+  const p = password.value;
+  const tip = document.getElementById("tip");
 
-  if (!username || !password) {
-    alert("请填写完整信息");
+  if (!u || !p) {
+    tip.innerText = "请填写完整信息";
     return;
   }
 
   let users = JSON.parse(localStorage.getItem("users") || "{}");
 
   if (mode === "register") {
-    if (users[username]) {
-      alert("注册失败：用户名已存在");
+    if (users[u]) {
+      tip.innerText = "用户名已存在";
       return;
     }
-    if (password.length < 8) {
-      alert("注册失败：密码不少于 8 位");
+    if (p.length < 8) {
+      tip.innerText = "密码不少于 8 位";
       return;
     }
-    users[username] = password;
+    users[u] = p;
     localStorage.setItem("users", JSON.stringify(users));
-    alert("注册成功，请登录");
+    tip.innerText = "注册成功，请登录";
     toggleMode();
     return;
   }
 
-  if (users[username] !== password) {
-    alert("用户名或密码错误");
+  if (users[u] !== p) {
+    tip.innerText = "账号或密码错误";
     return;
   }
 
-  localStorage.setItem("loginUser", username);
+  localStorage.setItem("loginUser", u);
   closeAuth();
-  showUser();
+  updateUserUI();
 }
 
-/* 登录状态显示 */
-function showUser() {
+/* 登录态 UI（新增但不影响弹窗） */
+function updateUserUI() {
   const user = localStorage.getItem("loginUser");
-  document.getElementById("welcomeUser").innerText =
-    user ? `你好，${user}` : "";
+  const welcome = document.getElementById("welcomeUser");
+  const loginBtn = document.getElementById("loginBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
+
+  if (user) {
+    welcome.innerText = `你好，${user}`;
+    loginBtn.style.display = "none";
+    logoutBtn.style.display = "inline-block";
+  } else {
+    welcome.innerText = "";
+    loginBtn.style.display = "inline-block";
+    logoutBtn.style.display = "none";
+  }
 }
 
-function checkLogin() {
-  return localStorage.getItem("loginUser");
+function logout() {
+  localStorage.removeItem("loginUser");
+  updateUserUI();
 }
 
-/* 权限拦截 */
-function goCart() {
-  if (!checkLogin()) {
-    const ok = confirm("该功能需要登录，是否前往登录？");
-    if (ok) {
-      mode = "login";
-      openAuth();
-    }
+/* 购物车 */
+function addToCart(name, price) {
+  if (!localStorage.getItem("loginUser")) {
+    alert("请先登录");
     return;
   }
-  alert("进入购物车（示意）");
+
+  let cart = JSON.parse(localStorage.getItem("cart") || "[]");
+  const exist = cart.find(i => i.name === name);
+
+  if (exist) {
+    exist.count++;
+  } else {
+    cart.push({ name, price, count: 1 });
+  }
+
+  localStorage.setItem("cart", JSON.stringify(cart));
+  alert("已加入购物车");
+}
+
+function goCart() {
+  if (!localStorage.getItem("loginUser")) {
+    alert("请先登录");
+    return;
+  }
+  location.href = "cart.html";
 }
 
 function goProfile() {
-  if (!checkLogin()) {
-    const ok = confirm("该功能需要登录，是否前往登录？");
-    if (ok) {
-      mode = "login";
-      openAuth();
-    }
+  if (!localStorage.getItem("loginUser")) {
+    alert("请先登录");
     return;
   }
-  alert("进入个人中心（示意）");
+  alert("这里是个人中心（可后续扩展）");
 }
 
-window.onload = showUser;
+function clearInputs() {
+  username.value = "";
+  password.value = "";
+}
+
+window.onload = updateUserUI;
