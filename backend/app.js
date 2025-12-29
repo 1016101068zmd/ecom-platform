@@ -90,3 +90,64 @@ app.get('/api/products/:id', async (req, res) => {
     }
 });
 
+// ===== 购物车接口 =====
+
+// 查询用户购物车
+app.get('/api/cart/:userId', async (req, res) => {
+    const { userId } = req.params;
+    try {
+        const [rows] = await pool.execute(
+            `SELECT c.id, c.product_id, c.quantity, p.name, p.price
+             FROM carts c
+             JOIN products p ON c.product_id = p.id
+             WHERE c.user_id = ?`,
+            [userId]
+        );
+        res.json(rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 添加到购物车
+app.post('/api/cart', async (req, res) => {
+    const { user_id, product_id, quantity } = req.body;
+    try {
+        await pool.execute(
+            'INSERT INTO carts (user_id, product_id, quantity) VALUES (?, ?, ?)',
+            [user_id, product_id, quantity]
+        );
+        res.json({ message: '添加成功' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 修改购物车数量
+app.put('/api/cart/:id', async (req, res) => {
+    const { id } = req.params;
+    const { quantity } = req.body;
+    try {
+        await pool.execute(
+            'UPDATE carts SET quantity=? WHERE id=?',
+            [quantity, id]
+        );
+        res.json({ message: '更新成功' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 删除购物车商品
+app.delete('/api/cart/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        await pool.execute(
+            'DELETE FROM carts WHERE id=?',
+            [id]
+        );
+        res.json({ message: '删除成功' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
