@@ -3,69 +3,79 @@
 <head>
   <meta charset="UTF-8" />
   <title>商品管理</title>
+  <link rel="stylesheet" href="layout.css" />
   <style>
-    body{font-family:Arial,"Microsoft YaHei",sans-serif;background:#f5f6fa;margin:0;padding:24px;}
-    .top{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;}
-    h2{margin:0;color:#333;}
     .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
-    input,select{padding:9px 10px;border:1px solid #ddd;border-radius:8px;outline:none;min-width:160px;background:#fff;}
+    input,select{padding:9px 10px;border:1px solid #ddd;border-radius:10px;outline:none;min-width:160px;background:#fff;}
     input:focus,select:focus{border-color:#4b7bec;}
-    button{padding:9px 12px;border:none;border-radius:8px;background:#4b7bec;color:#fff;cursor:pointer;}
-    button:hover{background:#3867d6;}
-    .ghost{background:#fff;color:#4b7bec;border:1px solid #cbd6ff;}
-    .ghost:hover{background:#eef2ff;}
-    table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;}
+    table{width:100%;border-collapse:collapse;background:#fff;}
     th,td{padding:12px;border-bottom:1px solid #eee;text-align:center;font-size:14px;}
     th{background:#4b7bec;color:#fff;}
-    .op button{padding:6px 10px;border-radius:7px;font-size:12px;}
+    .op button{padding:6px 10px;border-radius:9px;font-size:12px;}
     .danger{background:#eb3b5a;}
     .danger:hover{background:#c92a46;}
     .tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;}
     .tag.on{background:#e1f5d3;color:#2d7a18;}
     .tag.off{background:#ffe9e3;color:#c0392b;}
-    .welcome{font-size:13px;color:#666;margin-left:8px;}
   </style>
 </head>
 <body>
   <script src="auth.js"></script>
   <script>AUTH.requireLogin();</script>
 
-  <div class="top">
-    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-      <h2>商品管理</h2>
-      <span class="welcome">当前管理员：<span id="adminName"></span></span>
-    </div>
-    <div class="actions">
-      <input id="kw" placeholder="搜索商品名" />
-      <select id="statusFilter">
-        <option value="">全部状态</option>
-        <option value="ON">仅上架</option>
-        <option value="OFF">仅下架</option>
-      </select>
-      <button id="addBtn">新增商品</button>
-      <button class="ghost" onclick="location.href='orders.html'">去订单管理</button>
-      <button class="ghost" id="logoutBtn">退出登录</button>
-    </div>
-  </div>
+  <div class="app">
+    <aside class="side">
+      <div class="brand">后台管理</div>
+      <div class="muted" style="margin-bottom:12px;">管理员：<span id="adminName"></span></div>
+      <nav class="nav">
+        <a id="navProducts" href="products.html">商品管理</a>
+        <a id="navOrders" href="orders.html">订单管理</a>
+      </nav>
+      <button class="btn btn-ghost" id="logoutBtn" style="width:100%;margin-top:10px;">退出登录</button>
+    </aside>
 
-  <table>
-    <thead>
-      <tr>
-        <th>ID</th><th>商品名</th><th>分类</th><th>价格</th><th>库存</th><th>状态</th><th>操作</th>
-      </tr>
-    </thead>
-    <tbody id="tbody"></tbody>
-  </table>
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <b>商品管理</b>
+          <span class="muted" style="margin-left:8px;">支持搜索/筛选/新增/编辑/上下架/删除</span>
+        </div>
+        <div class="actions">
+          <input id="kw" placeholder="搜索商品名" />
+          <select id="statusFilter">
+            <option value="">全部状态</option>
+            <option value="ON">仅上架</option>
+            <option value="OFF">仅下架</option>
+          </select>
+          <button class="btn" id="addBtn">新增商品</button>
+          <button class="btn btn-ghost" onclick="location.href='orders.html'">去订单管理</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th><th>商品名</th><th>分类</th><th>价格</th><th>库存</th><th>状态</th><th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </main>
+  </div>
 
   <script src="store.js"></script>
   <script src="ui.js"></script>
   <script>
+    document.getElementById("adminName").textContent = AUTH.name || "admin";
+    document.getElementById("navProducts").classList.add("active");
+
     let products = Store.loadProducts();
 
     const tbody = document.getElementById("tbody");
     const kwInput = document.getElementById("kw");
     const statusFilter = document.getElementById("statusFilter");
-    document.getElementById("adminName").textContent = AUTH.name || "admin";
 
     function filteredProducts() {
       const kw = kwInput.value.trim();
@@ -92,9 +102,9 @@
             </span>
           </td>
           <td class="op">
-            <button data-act="edit" data-id="${p.id}">编辑</button>
-            <button data-act="toggle" data-id="${p.id}">${p.status === "ON" ? "下架" : "上架"}</button>
-            <button class="danger" data-act="del" data-id="${p.id}">删除</button>
+            <button class="btn" data-act="edit" data-id="${p.id}">编辑</button>
+            <button class="btn" data-act="toggle" data-id="${p.id}">${p.status === "ON" ? "下架" : "上架"}</button>
+            <button class="btn danger" data-act="del" data-id="${p.id}">删除</button>
           </td>
         </tr>
       `).join("");
@@ -103,8 +113,7 @@
     async function addProduct() {
       const data = await UI.productForm(null);
       if (!data) return;
-      const id = Date.now();
-      products.push({ id, ...data });
+      products.push({ id: Date.now(), ...data });
       Store.saveProducts(products);
       UI.toast("商品已新增");
       render();
@@ -141,7 +150,6 @@
       render();
     }
 
-    // 事件委托（避免每行写 onclick）
     tbody.addEventListener("click", (e) => {
       const btn = e.target.closest("button");
       if (!btn) return;

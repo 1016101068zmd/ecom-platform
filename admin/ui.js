@@ -29,7 +29,7 @@
     dlg = document.createElement("dialog");
     dlg.id = "dlg";
     dlg.style.cssText = `
-      border:none;border-radius:12px;padding:0;max-width:520px;width:92vw;
+      border:none;border-radius:12px;padding:0;max-width:560px;width:92vw;
       box-shadow:0 18px 42px rgba(0,0,0,.25);
     `;
     dlg.innerHTML = `
@@ -121,5 +121,50 @@
     });
   }
 
-  window.UI = { toast, confirmBox, productForm };
+  function orderDetail(order) {
+    const dlg = ensureDialog();
+    dlg.querySelector("#dlgTitle").textContent = "订单详情";
+    dlg.querySelector("#dlgBody").innerHTML = `
+      <div style="font-size:14px;line-height:1.8;color:#333;">
+        <div><b>订单号：</b>${order.no}</div>
+        <div><b>用户：</b>${order.user}</div>
+        <div><b>状态：</b>${order.status}</div>
+        <div><b>下单时间：</b>${order.createdAt || "-"}</div>
+        <div><b>收货地址：</b>${order.address || "-"}</div>
+
+        <div style="margin-top:10px;"><b>商品明细</b></div>
+        <table style="width:100%;border-collapse:collapse;margin-top:6px;">
+          <thead>
+            <tr>
+              <th style="text-align:left;border-bottom:1px solid #eee;padding:8px;">商品</th>
+              <th style="border-bottom:1px solid #eee;padding:8px;">单价</th>
+              <th style="border-bottom:1px solid #eee;padding:8px;">数量</th>
+              <th style="border-bottom:1px solid #eee;padding:8px;">小计</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${(order.items||[]).map(it=>`
+              <tr>
+                <td style="text-align:left;border-bottom:1px solid #f3f3f3;padding:8px;">${it.name}</td>
+                <td style="border-bottom:1px solid #f3f3f3;padding:8px;">¥${it.price}</td>
+                <td style="border-bottom:1px solid #f3f3f3;padding:8px;">${it.qty}</td>
+                <td style="border-bottom:1px solid #f3f3f3;padding:8px;">¥${it.price*it.qty}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+
+        <div style="text-align:right;margin-top:10px;font-weight:700;">总计：¥${order.amount}</div>
+      </div>
+    `;
+    dlg.querySelector("#dlgFoot").innerHTML = `
+      <button id="od_close" style="padding:9px 12px;border:none;border-radius:10px;background:#4b7bec;color:#fff;cursor:pointer;">关闭</button>
+    `;
+    return new Promise((resolve)=>{
+      dlg.querySelector("#od_close").onclick=()=>{ dlg.close("ok"); resolve(true); };
+      dlg.showModal();
+    });
+  }
+
+  window.UI = { toast, confirmBox, productForm, orderDetail };
 })();
