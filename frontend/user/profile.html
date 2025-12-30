@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>个人中心</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="navbar">
+  <button onclick="history.back()">←</button>
+  <h3>个人中心</h3>
+</header>
+
+<<div class="order-status">
+  <div onclick="goStatus('待付款')">待付款</div>
+  <div onclick="goStatus('待发货')">待发货</div>
+  <div onclick="goStatus('待收货')">待收货</div>
+  <div onclick="goStatus('待评价')">待评价</div>
+  <div onclick="goStatus('售后')">售后</div>
+</div>
+
+
+<div id="orderList"></div>
+
+<script src="order.js"></script>
+<script>
+  renderOrders();
+</script>
+
+
+  <ul class="profile-list">
+  <li onclick="location.href='favorites.html'">❤️ 我的收藏</li>
+  <li onclick="location.href='orders.html'">📦 我的订单</li>
+  <li onclick="logout()">🚪 退出登录</li>
+</ul>
+
+</div>
+
+<script src="profile.js"></script>
+</body>
+</html>

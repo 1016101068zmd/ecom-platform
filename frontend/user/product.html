@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>商品详情</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="navbar">
+  <button onclick="history.back()">←</button>
+</header>
+
+<main class="detail">
+  <img id="img">
+  <div class="detail-info">
+    <h2 id="name"></h2>
+    <p id="desc"></p>
+    <p class="price">￥<span id="price"></span></p>
+    <p id="scoreInfo" style="color:#ff7aa2;font-size:14px;"></p>
+    <button class="primary-btn" onclick="addCart()">加入购物车</button>
+    <button onclick="shareToChat()">分享给消息</button>
+    <button onclick="addFav()">❤️ 收藏</button>
+<button class="primary-btn" onclick="buyNow()">立即购买</button>
+
+  </div>
+  <div>
+  评分：
+  <select id="star">
+    <option value="5">⭐⭐⭐⭐⭐</option>
+    <option value="4">⭐⭐⭐⭐</option>
+    <option value="3">⭐⭐⭐</option>
+    <option value="2">⭐⭐</option>
+    <option value="1">⭐</option>
+  </select>
+</div>
+
+</main>
+
+<section class="comment">
+  <h3>商品评价</h3>
+  <textarea id="commentInput"></textarea>
+  <button onclick="addComment()">发表评论</button>
+  <ul id="commentList"></ul>
+</section>
+
+<script src="data.js"></script>
+<script src="product.js"></script>
+</body>
+</html>

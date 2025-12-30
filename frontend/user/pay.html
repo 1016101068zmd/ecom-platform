@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>支付</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="navbar">
+  <button onclick="history.back()">←</button>
+  <h3>支付订单</h3>
+</header>
+
+<div class="card">
+  <p>选择支付方式</p>
+  <button onclick="pay('微信')">微信支付</button>
+  <button onclick="pay('支付宝')">支付宝支付</button>
+</div>
+
+<script src="pay.js"></script>
+</body>
+</html>

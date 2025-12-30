@@ -1,56 +1,97 @@
-function loadCart() {
-  let cart = JSON.parse(localStorage.getItem("cart") || "[]");
-  const box = document.getElementById("cartList");
-  const total = document.getElementById("totalPrice");
+const key = `cart_${localStorage.user}`;
+let cart = JSON.parse(localStorage.getItem(key) || "[]");
 
-  box.innerHTML = "";
+/**********************
+ * 渲染购物车
+ **********************/
+function render() {
+  cartList.innerHTML = "";
   let sum = 0;
 
-  if (cart.length === 0) {
-    box.innerHTML = "<p>购物车为空</p>";
-    total.innerText = "总价：￥0";
+  cart.forEach((i, idx) => {
+
+    // ✅ 只统计勾选商品金额
+    if (i.checked) {
+      sum += i.price * i.count;
+    }
+
+    cartList.innerHTML += `
+      <div class="cart-item">
+        <!-- 选择框 -->
+        <input type="checkbox"
+          ${i.checked ? "checked" : ""}
+          onchange="toggleCheck(${idx}, this.checked)"
+        >
+
+        <span onclick="location.href='product.html?id=${i.id}'">
+          ${i.name}
+        </span>
+
+        <div>
+          <button onclick="change(${idx}, -1)">-</button>
+          ${i.count}
+          <button onclick="change(${idx}, 1)">+</button>
+          <button onclick="del(${idx})">🗑</button>
+        </div>
+      </div>
+    `;
+  });
+
+  total.innerText = sum;
+  localStorage.setItem(key, JSON.stringify(cart));
+}
+
+/**********************
+ * 勾选 / 取消勾选
+ **********************/
+function toggleCheck(index, checked) {
+  cart[index].checked = checked;
+  localStorage.setItem(key, JSON.stringify(cart));
+  render(); // ✅ 重新计算合计
+}
+
+/**********************
+ * 修改数量
+ **********************/
+function change(i, n) {
+  cart[i].count += n;
+
+  if (cart[i].count <= 0) {
+    cart.splice(i, 1);
+  }
+
+  render();
+}
+
+/**********************
+ * 删除商品
+ **********************/
+function del(i) {
+  cart.splice(i, 1);
+  render();
+}
+
+/**********************
+ * 立即购买（仅勾选商品）
+ **********************/
+function buySelected() {
+  if (!localStorage.user) return alert("请先登录");
+
+  const selected = cart.filter(i => i.checked);
+
+  if (!selected.length) {
+    alert("请选择要购买的商品");
     return;
   }
 
-  cart.forEach((item, i) => {
-    sum += item.price * item.count;
+  // ✅ 存入临时购买区
+  localStorage.setItem(
+    `buy_now_${localStorage.user}`,
+    JSON.stringify(selected)
+  );
 
-    const div = document.createElement("div");
-    div.className = "cart-item";
-    div.innerHTML = `
-      <span>${item.name}</span>
-      <span>￥${item.price}</span>
-      <input type="number" min="1" value="${item.count}"
-        onchange="updateCount(${i},this.value)">
-      <button onclick="removeItem(${i})">删除</button>
-    `;
-    box.appendChild(div);
-  });
-
-  total.innerText = `总价：￥${sum}`;
+  location.href = "buy.html";
 }
 
-function updateCount(i, val) {
-  let cart = JSON.parse(localStorage.getItem("cart"));
-  cart[i].count = Number(val);
-  localStorage.setItem("cart", JSON.stringify(cart));
-  loadCart();
-}
-
-function removeItem(i) {
-  let cart = JSON.parse(localStorage.getItem("cart"));
-  cart.splice(i, 1);
-  localStorage.setItem("cart", JSON.stringify(cart));
-  loadCart();
-}
-
-function clearCart() {
-  localStorage.removeItem("cart");
-  loadCart();
-}
-
-function goBack() {
-  location.href = "index.html";
-}
-
-window.onload = loadCart;
+// 初始渲染
+render();

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>消息</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="navbar">
+  <button onclick="history.back()">←</button>
+  <h3>消息</h3>
+</header>
+
+<h4>🏪 商家咨询</h4>
+<div class="chat-item" onclick="openChat('shop','官方客服')">官方客服</div>
+<div class="chat-item" onclick="openChat('shop','旗舰店')">旗舰店</div>
+
+<h4>👤 好友聊天</h4>
+<div class="chat-item" onclick="openChat('friend','小明')">小明</div>
+
+<script src="message.js"></script>
+</body>
+</html>
