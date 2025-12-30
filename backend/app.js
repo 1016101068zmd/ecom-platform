@@ -151,3 +151,75 @@ app.delete('/api/cart/:id', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+// ===== 订单接口 =====
+
+// 创建订单（从购物车生成）
+app.post('/api/orders', async (req, res) => {
+    const { user_id } = req.body;
+    const conn = await pool.getConnection();
+    try {
+        await conn.beginTransaction();
+
+        const [cart] = await conn.execute(
+            `SELECT c.product_id, c.quantity, p.price
+             FROM carts c JOIN products p ON c.product_id=p.id
+             WHERE c.user_id=?`, [user_id]
+        );
+        if (cart.length === 0) {
+            await conn.rollback();
+            return res.status(400).json({ error: '购物车为空' });
+        }
+
+        const total = cart.reduce((s,i)=>s+i.price*i.quantity,0);
+        const [orderRes] = await conn.execute(
+            'INSERT INTO orders (user_id, total_price) VALUES (?,?)',
+            [user_id, total]
+        );
+        const orderId = orderRes.insertId;
+
+        for (const i of cart) {
+            await conn.execute(
+                'INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?,?,?,?)',
+                [orderId, i.product_id, i.quantity, i.price]
+            );
+        }
+
+        await conn.execute('DELETE FROM carts WHERE user_id=?', [user_id]);
+        await conn.commit();
+        res.json({ message: '下单成功', order_id: orderId });
+    } catch (e) {
+        await conn.rollback();
+        res.status(500).json({ error: e.message });
+    } finally {
+        conn.release();
+    }
+});
+
+// 查询用户订单
+app.get('/api/orders/:userId', async (req, res) => {
+    const { userId } = req.params;
+    try {
+        const [rows] = await pool.execute(
+            'SELECT * FROM orders WHERE user_id=? ORDER BY created_at DESC',
+            [userId]
+        );
+        res.json(rows);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// 修改订单状态
+app.put('/api/orders/:id', async (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body;
+    try {
+        await pool.execute(
+            'UPDATE orders SET status=? WHERE id=?',
+            [status, id]
+        );
+        res.json({ message: '状态更新成功' });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
