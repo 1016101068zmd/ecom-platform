@@ -65,7 +65,7 @@ app.post('/api/login', async (req, res) => {
 });
 
 app.listen(3000, () => {
-    console.log('Server running on http://localhost:3000');
+    console.log('Server running on http://10.10.21.212:3000');
 });
 
 // 获取所有商品
