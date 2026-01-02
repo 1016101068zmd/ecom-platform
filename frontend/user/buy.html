@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>确认订单</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="navbar">
+  <button onclick="history.back()">←</button>
+  <h3>确认订单</h3>
+</header>
+
+<div class="card">
+
+  <!-- 商品列表 -->
+  <div id="buyList"></div>
+
+  <p>合计：￥<span id="total">0</span></p>
+
+  <!-- 收货信息 -->
+  <input id="name" placeholder="收货人">
+  <input id="phone" placeholder="联系电话">
+  <input id="addr" placeholder="收货地址">
+
+  <button class="primary-btn" id="submitBtn">提交订单</button>
+
+</div>
+
+<script src="data.js"></script>
+<script src="buy.js"></script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>🍑 Shop</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="navbar">
+  <div class="logo">🍑 Shop</div>
+
+  <div class="search-box">
+    <input id="searchInput" placeholder="搜索商品">
+    <button onclick="doSearch()">搜索</button>
+  </div>
+
+  <div class="nav-btns">
+    <span id="hiUser" class="hi-user"></span>
+    <button onclick="goMessage()">💬 消息</button>
+    <button onclick="goCart()">🛒 购物车 <span id="cartCount" class="badge">0</span></button>
+    <button onclick="goProfile()">👤 个人中心</button>
+    <button id="loginBtn" onclick="openLogin()">登录 / 注册</button>
+    <button id="logoutBtn" onclick="logout()" style="display:none">退出</button>
+  </div>
+</header>
+
+<main id="productList" class="product-list"></main>
+
+<!-- 登录 / 注册弹窗 -->
+<div class="modal" id="loginModal">
+  <div class="modal-box">
+    <h3 id="modalTitle">登录</h3>
+    <input id="username" placeholder="用户名">
+    <input id="password" type="password" placeholder="密码">
+    <button class="primary-btn" onclick="submit()">确定</button>
+    <p id="toggleText" class="toggle" onclick="toggleMode()">没有账号？注册</p>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="login.js"></script>
+<script src="index.js"></script>
+</body>
+</html>
