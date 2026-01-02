@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>订单管理</title>
+  <link rel="stylesheet" href="layout.css" />
+  <style>
+    .filters{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+    select,input{padding:9px 10px;border-radius:10px;border:1px solid #ddd;background:#fff;outline:none;min-width:160px;}
+    select:focus,input:focus{border-color:#4b7bec;}
+    table{width:100%;border-collapse:collapse;background:#fff;}
+    th,td{padding:12px;border-bottom:1px solid #eee;text-align:center;font-size:14px;}
+    th{background:#4b7bec;color:#fff;}
+    .tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;}
+    .tag.done{background:#e1f5d3;color:#2d7a18;}
+    .tag.cancel{background:#ffe9e3;color:#c0392b;}
+    .op button{padding:6px 10px;border-radius:9px;font-size:12px;}
+  </style>
+</head>
+<body>
+  <script src="auth.js"></script>
+  <script>AUTH.requireLogin();</script>
+
+  <div class="app">
+    <aside class="side">
+      <div class="brand">后台管理</div>
+      <div class="muted" style="margin-bottom:12px;">管理员：<span id="adminName"></span></div>
+      <nav class="nav">
+        <a id="navProducts" href="products.html">商品管理</a>
+        <a id="navOrders" href="orders.html">订单管理</a>
+      </nav>
+      <button class="btn btn-ghost" id="logoutBtn" style="width:100%;margin-top:10px;">退出登录</button>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <b>订单管理</b>
+          <span class="muted" style="margin-left:8px;">支持搜索/筛选/合法状态流转/查看详情</span>
+        </div>
+        <div class="filters">
+          <input id="kwOrder" placeholder="按订单号搜索" />
+          <select id="statusFilter">
+            <option value="">全部状态</option>
+            <option value="待支付">待支付</option>
+            <option value="已支付">已支付</option>
+            <option value="已发货">已发货</option>
+            <option value="已完成">已完成</option>
+            <option value="已取消">已取消</option>
+          </select>
+          <button class="btn btn-ghost" onclick="location.href='products.html'">返回商品管理</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <table>
+          <thead>
+            <tr>
+              <th>订单号</th><th>用户</th><th>金额</th><th>状态</th><th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <script src="store.js"></script>
+  <script src="ui.js"></script>
+  <script>
+    document.getElementById("adminName").textContent = AUTH.name || "admin";
+    document.getElementById("navOrders").classList.add("active");
+
+    const ALL_STATUSES = ["待支付","已支付","已发货","已完成","已取消"];
+    const FLOW = {
+      "待支付": ["已支付","已取消"],
+      "已支付": ["已发货","已取消"],
+      "已发货": ["已完成"],
+      "已完成": [],
+      "已取消": []
+    };
+
+    let orders = Store.loadOrders();
+
+    const tbody = document.getElementById("tbody");
+    const kwInput = document.getElementById("kwOrder");
+    const statusFilter = document.getElementById("statusFilter");
+
+    function filteredOrders() {
+      const kw = kwInput.value.trim();
+      const st = statusFilter.value;
+      return orders.filter(o => {
+        if (kw && !o.no.includes(kw)) return false;
+        if (st && o.status !== st) return false;
+        return true;
+      });
+    }
+
+    function render() {
+      const list = filteredOrders();
+      tbody.innerHTML = list.map((o) => {
+        const idx = orders.findIndex(x => x.no === o.no);
+        const tagCls = o.status === "已完成" ? "done" : (o.status === "已取消" ? "cancel" : "");
+        return `
+          <tr>
+            <td>${o.no}</td>
+            <td>${o.user}</td>
+            <td>¥${o.amount}</td>
+            <td><span class="tag ${tagCls}">${o.status}</span></td>
+            <td class="op">
+              <button class="btn btn-ghost" data-role="detail" data-idx="${idx}">详情</button>
+              <select data-role="st" data-idx="${idx}">
+                ${ALL_STATUSES.map(s=>{
+                  const can = (s === o.status) || FLOW[o.status].includes(s);
+                  return `<option value="${s}" ${s===o.status?"selected":""} ${can?"":"disabled"}>${s}${can?"":"（不可直接跳）"}</option>`;
+                }).join("")}
+              </select>
+              <button class="btn" data-role="save" data-idx="${idx}">保存</button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    async function saveStatus(index, newStatus) {
+      const o = orders[index];
+      if (!o) return;
+
+      const from = o.status;
+      if (newStatus === from) return UI.toast("状态未变化");
+
+      if (!FLOW[from].includes(newStatus)) {
+        UI.toast(`不允许从「${from}」直接变为「${newStatus}」`);
+        render();
+        return;
+      }
+
+      const ok = await UI.confirmBox(`确认将订单 ${o.no} 状态由「${from}」改为「${newStatus}」吗？`);
+      if (!ok) { render(); return; }
+
+      o.status = newStatus;
+      Store.saveOrders(orders);
+      orders = Store.loadOrders(); // 重新读一遍，保证 amount 计算一致
+      UI.toast(`已更新：${o.no} → ${newStatus}`);
+      render();
+    }
+
+    tbody.addEventListener("click", (e) => {
+      const btn = e.target.closest("button");
+      if (!btn) return;
+
+      const role = btn.dataset.role;
+      const idx = Number(btn.dataset.idx);
+
+      if (role === "detail") {
+        const o = orders[idx];
+        if (o) UI.orderDetail(o);
+        return;
+      }
+
+      if (role === "save") {
+        const sel = tbody.querySelector(`select[data-role="st"][data-idx="${idx}"]`);
+        if (!sel) return;
+        saveStatus(idx, sel.value);
+      }
+    });
+
+    kwInput.addEventListener("input", render);
+    statusFilter.addEventListener("change", render);
+
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      const ok = await UI.confirmBox("确认退出登录吗？");
+      if (!ok) return;
+      AUTH.logout();
+      location.href = "login.html";
+    });
+
+    render();
+  </script>
+</body>
+</html>
