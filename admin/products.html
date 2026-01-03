@@ -2,53 +2,60 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>商品管理</title>
   <link rel="stylesheet" href="layout.css" />
   <style>
-    .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
-    input,select{padding:9px 10px;border:1px solid #ddd;border-radius:10px;outline:none;min-width:160px;background:#fff;}
-    input:focus,select:focus{border-color:#4b7bec;}
-    table{width:100%;border-collapse:collapse;background:#fff;}
-    th,td{padding:12px;border-bottom:1px solid #eee;text-align:center;font-size:14px;}
-    th{background:#4b7bec;color:#fff;}
-    .op button{padding:6px 10px;border-radius:9px;font-size:12px;}
-    .danger{background:#eb3b5a;}
-    .danger:hover{background:#c92a46;}
-    .tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;}
-    .tag.on{background:#e1f5d3;color:#2d7a18;}
-    .tag.off{background:#ffe9e3;color:#c0392b;}
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+    }
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid #eee;
+      text-align: center;
+      font-size: 14px;
+    }
+    th {
+      background: #4b7bec;
+      color: #fff;
+    }
+    button {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 8px;
+      background: #4b7bec;
+      color: #fff;
+      cursor: pointer;
+      margin: 0 4px;
+    }
+    button:hover {
+      background: #3867d6;
+    }
   </style>
 </head>
-<body>
-  <script src="auth.js"></script>
-  <script>AUTH.requireLogin();</script>
 
+<body>
   <div class="app">
     <aside class="side">
-      <div class="brand">后台管理</div>
-      <div class="muted" style="margin-bottom:12px;">管理员：<span id="adminName"></span></div>
+      <div class="brand">电商管理后台</div>
       <nav class="nav">
-        <a id="navProducts" href="products.html">商品管理</a>
-        <a id="navOrders" href="orders.html">订单管理</a>
+        <a href="products.html" class="active">商品管理</a>
+        <a href="orders.html">订单管理</a>
       </nav>
-      <button class="btn btn-ghost" id="logoutBtn" style="width:100%;margin-top:10px;">退出登录</button>
     </aside>
 
     <main class="main">
       <div class="topbar">
         <div>
-          <b>商品管理</b>
-          <span class="muted" style="margin-left:8px;">支持搜索/筛选/新增/编辑/上下架/删除</span>
+          <div style="font-size:16px;font-weight:700;">商品管理</div>
+          <div class="muted">管理所有商品信息</div>
         </div>
-        <div class="actions">
-          <input id="kw" placeholder="搜索商品名" />
-          <select id="statusFilter">
-            <option value="">全部状态</option>
-            <option value="ON">仅上架</option>
-            <option value="OFF">仅下架</option>
-          </select>
-          <button class="btn" id="addBtn">新增商品</button>
-          <button class="btn btn-ghost" onclick="location.href='orders.html'">去订单管理</button>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <span id="adminName" style="color:#333;"></span>
+          <button class="btn" onclick="addProduct()">+ 新增商品</button>
+          <button class="btn-ghost" onclick="logout()">退出登录</button>
         </div>
       </div>
 
@@ -56,7 +63,13 @@
         <table>
           <thead>
             <tr>
-              <th>ID</th><th>商品名</th><th>分类</th><th>价格</th><th>库存</th><th>状态</th><th>操作</th>
+              <th>ID</th>
+              <th>商品名</th>
+              <th>分类</th>
+              <th>价格</th>
+              <th>库存</th>
+              <th>状态</th>
+              <th>操作</th>
             </tr>
           </thead>
           <tbody id="tbody"></tbody>
@@ -65,113 +78,108 @@
     </main>
   </div>
 
-  <script src="store.js"></script>
+  <script src="auth.js"></script>
   <script src="ui.js"></script>
   <script>
-    document.getElementById("adminName").textContent = AUTH.name || "admin";
-    document.getElementById("navProducts").classList.add("active");
+    // 改回 localhost
+    const API_BASE = "http://localhost:3000/api";
+    
+    AUTH.requireLogin();
+    document.getElementById("adminName").textContent = AUTH.name;
 
-    let products = Store.loadProducts();
+    let products = [];
 
-    const tbody = document.getElementById("tbody");
-    const kwInput = document.getElementById("kw");
-    const statusFilter = document.getElementById("statusFilter");
-
-    function filteredProducts() {
-      const kw = kwInput.value.trim();
-      const st = statusFilter.value;
-      return products.filter(p => {
-        if (kw && !p.name.includes(kw)) return false;
-        if (st && p.status !== st) return false;
-        return true;
-      });
+    async function adminFetch(url, options = {}) {
+      const headers = {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${AUTH.token}`
+      };
+      const res = await fetch(url, { ...options, headers });
+      if (res.status === 401 || res.status === 403) {
+        alert("登录过期，请重新登录");
+        AUTH.logout();
+        location.href = "login.html";
+        return null;
+      }
+      return res;
     }
 
-    function render() {
-      const list = filteredProducts();
+    async function loadProducts() {
+      try {
+        const res = await fetch(API_BASE + "/products");
+        products = await res.json();
+        renderProducts(products);
+      } catch (e) {
+        alert("加载商品失败: " + e.message);
+      }
+    }
+
+    function renderProducts(list) {
+      const tbody = document.getElementById("tbody");
       tbody.innerHTML = list.map(p => `
         <tr>
           <td>${p.id}</td>
           <td>${p.name}</td>
           <td>${p.category || "-"}</td>
-          <td>¥${p.price}</td>
+          <td>￥${p.price}</td>
           <td>${p.stock}</td>
+          <td>${p.status}</td>
           <td>
-            <span class="tag ${p.status === "ON" ? "on" : "off"}">
-              ${p.status === "ON" ? "上架" : "下架"}
-            </span>
-          </td>
-          <td class="op">
-            <button class="btn" data-act="edit" data-id="${p.id}">编辑</button>
-            <button class="btn" data-act="toggle" data-id="${p.id}">${p.status === "ON" ? "下架" : "上架"}</button>
-            <button class="btn danger" data-act="del" data-id="${p.id}">删除</button>
+            <button onclick="editProduct(${p.id})">编辑</button>
+            <button onclick="delProduct(${p.id})" style="background:#e74c3c;">删除</button>
           </td>
         </tr>
       `).join("");
     }
 
     async function addProduct() {
-      const data = await UI.productForm(null);
+      const data = await UI.productForm(); 
       if (!data) return;
-      products.push({ id: Date.now(), ...data });
-      Store.saveProducts(products);
-      UI.toast("商品已新增");
-      render();
+
+      const res = await adminFetch(API_BASE + "/admin/products", {
+        method: "POST",
+        body: JSON.stringify(data)
+      });
+      if (res) {
+        alert("新增成功");
+        loadProducts();
+      }
     }
 
     async function editProduct(id) {
       const p = products.find(x => x.id === id);
-      if (!p) return;
       const data = await UI.productForm(p);
       if (!data) return;
-      Object.assign(p, data);
-      Store.saveProducts(products);
-      UI.toast("商品已保存");
-      render();
-    }
 
-    function toggleStatus(id) {
-      const p = products.find(x => x.id === id);
-      if (!p) return;
-      p.status = p.status === "ON" ? "OFF" : "ON";
-      Store.saveProducts(products);
-      UI.toast("状态已更新");
-      render();
+      const res = await adminFetch(API_BASE + `/admin/products/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(data)
+      });
+      if (res) {
+        alert("更新成功");
+        loadProducts();
+      }
     }
 
     async function delProduct(id) {
-      const p = products.find(x => x.id === id);
-      if (!p) return;
-      const ok = await UI.confirmBox(`确认删除商品「${p.name}」吗？`);
+      const ok = await UI.confirmBox("确定要删除此商品吗？");
       if (!ok) return;
-      products = products.filter(x => x.id !== id);
-      Store.saveProducts(products);
-      UI.toast("已删除");
-      render();
+
+      const res = await adminFetch(API_BASE + `/admin/products/${id}`, {
+        method: "DELETE"
+      });
+      if (res) {
+        alert("已删除");
+        loadProducts();
+      }
     }
 
-    tbody.addEventListener("click", (e) => {
-      const btn = e.target.closest("button");
-      if (!btn) return;
-      const act = btn.dataset.act;
-      const id = Number(btn.dataset.id);
-      if (act === "edit") editProduct(id);
-      if (act === "toggle") toggleStatus(id);
-      if (act === "del") delProduct(id);
-    });
-
-    document.getElementById("addBtn").addEventListener("click", addProduct);
-    kwInput.addEventListener("input", render);
-    statusFilter.addEventListener("change", render);
-
-    document.getElementById("logoutBtn").addEventListener("click", async () => {
-      const ok = await UI.confirmBox("确认退出登录吗？");
-      if (!ok) return;
+    function logout() {
       AUTH.logout();
       location.href = "login.html";
-    });
+    }
 
-    render();
+    loadProducts();
   </script>
 </body>
 </html>

@@ -1,13 +1,13 @@
+/**********************
+ * 工具函数
+ **********************/
 function getUserKey(key) {
   return `${key}_${localStorage.user}`;
 }
 
-
-function doSearch() {
-  const k = searchInput.value.toLowerCase();
-  renderProducts(products.filter(p => p.name.toLowerCase().includes(k)));
-}
-
+/**********************
+ * 页面跳转
+ **********************/
 function goCart() {
   if (!localStorage.user) return alert("请先登录");
   location.href = "cart.html";
@@ -20,7 +20,13 @@ function goMessage() {
   if (!localStorage.user) return alert("请先登录");
   location.href = "message.html";
 }
+function goDetail(id) {
+  location.href = `product.html?id=${id}`;
+}
 
+/**********************
+ * 购物车数量
+ **********************/
 function updateCartCount() {
   if (!localStorage.user) {
     cartCount.innerText = 0;
@@ -29,29 +35,27 @@ function updateCartCount() {
   const cart = JSON.parse(localStorage.getItem(getUserKey("cart")) || "[]");
   cartCount.innerText = cart.reduce((s, i) => s + i.count, 0);
 }
-function renderProducts(arr = products) {
 
-  arr.forEach(p => {
+/**********************
+ * 商品渲染（只保留一个）
+ **********************/
+function renderProducts(list) {
+  const box = document.getElementById("productList");
+
+  list.forEach(p => {
     const rates = JSON.parse(localStorage.getItem(`rate_${p.id}`) || "[]");
     const count = rates.length;
-
-    if (!count) {
-      p.avg = 0;
-      p.count = 0;
-    } else {
-      p.avg = (
-        rates.reduce((s, r) => s + r.score, 0) / count
-      ).toFixed(1);
-      p.count = count;
-    }
+    p.avg = count
+      ? (rates.reduce((s, r) => s + r.score, 0) / count).toFixed(1)
+      : 0;
+    p.count = count;
   });
 
-  // ⭐ 按评分从高到低排序
-  arr.sort((a, b) => b.avg - a.avg);
+  // 按评分排序
+  list.sort((a, b) => b.avg - a.avg);
 
-  productList.innerHTML = arr.map(p => `
-    <div class="product" onclick="location.href='product.html?id=${p.id}'">
-      <img src="${p.img}">
+  box.innerHTML = list.map(p => `
+    <div class="product" onclick="goDetail(${p.id})">
       <h4>${p.name}</h4>
       <p style="color:#ff7aa2">
         ${p.avg ? "⭐".repeat(Math.round(p.avg)) + " " + p.avg + " 分" : "暂无评分"}
@@ -61,5 +65,20 @@ function renderProducts(arr = products) {
   `).join("");
 }
 
-renderProducts();
-updateCartCount();
+/**********************
+ * 页面加载 → 从数据库取商品
+ **********************/
+document.addEventListener("DOMContentLoaded", () => {
+  updateCartCount();
+
+  fetch("/api/products")
+
+    .then(res => res.json())
+    .then(list => {
+      renderProducts(list);
+    })
+    .catch(err => {
+      console.error(err);
+      alert("商品加载失败");
+    });
+});

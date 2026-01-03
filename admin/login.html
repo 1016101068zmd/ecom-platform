@@ -2,61 +2,180 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>后台登录</title>
   <style>
-    body{margin:0;height:100vh;display:flex;justify-content:center;align-items:center;background:#f5f6fa;font-family:Arial,"Microsoft YaHei",sans-serif;}
-    .box{width:340px;padding:28px;background:#fff;border-radius:12px;box-shadow:0 10px 24px rgba(0,0,0,.10);}
-    h2{margin:0 0 18px;text-align:center;color:#333;}
-    .row{margin-bottom:12px;}
-    label{display:block;font-size:13px;color:#666;margin-bottom:6px;}
-    input{width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;outline:none;}
-    input:focus{border-color:#4b7bec;}
-    button{width:100%;padding:11px;border:none;border-radius:9px;background:#4b7bec;color:#fff;cursor:pointer;font-size:15px;margin-top:8px;}
-    button:hover{background:#3867d6;}
-    .tip{margin-top:10px;text-align:center;color:#888;font-size:12px;}
-    .error{margin-top:8px;color:#e74c3c;font-size:12px;text-align:center;min-height:16px;}
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #f5f6fa;
+      font-family: Arial, "Microsoft YaHei", sans-serif;
+    }
+    .box {
+      width: 340px;
+      padding: 28px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 10px 24px rgba(0,0,0,.10);
+    }
+    h2 { 
+      text-align: center;
+      color: #333;
+      margin-bottom: 24px;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 14px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+    input:focus {
+      outline: none;
+      border-color: #4b7bec;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 9px;
+      background: #4b7bec;
+      color: #fff;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 600;
+    }
+    button:hover {
+      background: #3867d6;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .error {
+      margin-top: 12px;
+      color: #e74c3c;
+      text-align: center;
+      font-size: 13px;
+      min-height: 20px;
+    }
+    .success {
+      margin-top: 12px;
+      color: #27ae60;
+      text-align: center;
+      font-size: 13px;
+    }
   </style>
 </head>
 <body>
+
   <div class="box">
     <h2>后台管理登录</h2>
 
-    <div class="row">
-      <label>管理员账号</label>
-      <input id="adminUser" type="text" placeholder="账号：admin" />
-    </div>
-
-    <div class="row">
-      <label>密码</label>
-      <input id="adminPass" type="password" placeholder="密码：123456" />
-    </div>
-
+    <input id="username" placeholder="管理员账号" autocomplete="username" />
+    <input id="password" type="password" placeholder="密码" autocomplete="current-password" />
     <button id="loginBtn" type="button">登录</button>
-    <div class="error" id="errorBox"></div>
-    <div class="tip">演示版账号：admin / 123456</div>
+
+    <div id="message" class="error"></div>
   </div>
 
-  <script src="auth.js"></script>
-  <script src="ui.js"></script>
   <script>
-    const USER = "admin";
-    const PASS = "123456";
+    // 内联 AUTH 对象
+    const AUTH = {
+      KEY_LOGGED: "admin_logged",
+      KEY_NAME: "admin_name",
+      KEY_TOKEN: "admin_token",
 
-    if (AUTH.logged) location.href = "products.html";
+      login(name, token) {
+        sessionStorage.setItem(this.KEY_LOGGED, "1");
+        sessionStorage.setItem(this.KEY_NAME, name);
+        sessionStorage.setItem(this.KEY_TOKEN, token || "");
+      },
 
-    document.getElementById("loginBtn").addEventListener("click", () => {
-      const u = (document.getElementById("adminUser").value || "").trim();
-      const p = (document.getElementById("adminPass").value || "").trim();
-      const errBox = document.getElementById("errorBox");
+      logout() {
+        sessionStorage.removeItem(this.KEY_LOGGED);
+        sessionStorage.removeItem(this.KEY_NAME);
+        sessionStorage.removeItem(this.KEY_TOKEN);
+      }
+    };
 
-      if (!u || !p) return (errBox.textContent = "请输入账号和密码");
-      if (u !== USER || p !== PASS) return (errBox.textContent = "账号或密码错误（演示）");
+    console.log("login page loaded");
 
-      AUTH.login(u);
-      errBox.textContent = "";
-      UI.toast("登录成功");
-      location.href = "products.html";
+    const btn = document.getElementById("loginBtn");
+    const messageBox = document.getElementById("message");
+    const usernameInput = document.getElementById("username");
+    const passwordInput = document.getElementById("password");
+
+    // 回车登录
+    passwordInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        btn.click();
+      }
+    });
+
+    btn.addEventListener("click", async () => {
+      console.log("Login button clicked");
+
+      const username = usernameInput.value.trim();
+      const password = passwordInput.value.trim();
+
+      messageBox.textContent = "";
+      messageBox.className = "error";
+
+      if (!username || !password) {
+        messageBox.textContent = "请输入账号和密码";
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "登录中...";
+
+      try {
+        console.log("Sending request to backend...");
+        
+        // 改回 localhost
+        const res = await fetch("http://localhost:3000/api/admin/login", {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ username, password })
+        });
+
+        console.log("Response received, status:", res.status);
+
+        const data = await res.json();
+        console.log("Response data:", data);
+
+        if (!res.ok) {
+          messageBox.textContent = data.error || "登录失败";
+          btn.disabled = false;
+          btn.textContent = "登录";
+          return;
+        }
+
+        messageBox.className = "success";
+        messageBox.textContent = "登录成功，跳转中...";
+        
+        AUTH.login(data.username, data.token);
+        
+        setTimeout(() => {
+          window.location.href = "products.html";
+        }, 500);
+
+      } catch (e) {
+        console.error("Login error:", e);
+        messageBox.textContent = "无法连接后端服务: " + e.message;
+        btn.disabled = false;
+        btn.textContent = "登录";
+      }
     });
   </script>
+
 </body>
 </html>

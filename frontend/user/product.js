@@ -194,4 +194,17 @@ function renderScoreInfo() {
   const stars = "⭐".repeat(Math.round(avg));
   scoreInfo.innerText = `${stars} ${avg} 分（${count} 人评价）`;
 }
+function renderProducts(products) {
+  const box = document.getElementById("productList");
+  box.innerHTML = products.map(p => `
+    <div class="product">
+      <h4>${p.name}</h4>
+      <p>￥${p.price}</p>
+      <button onclick="goDetail(${p.id})">查看</button>
+    </div>
+  `).join("");
+}
 
+function goDetail(id) {
+  location.href = `product.html?id=${id}`;
+}
