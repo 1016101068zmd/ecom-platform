@@ -4,19 +4,397 @@
 <meta charset="UTF-8">
 <title>购物车</title>
 <link rel="stylesheet" href="style.css">
+<style>
+  body {
+    font-family: Arial, "Microsoft YaHei", sans-serif;
+    background: #f5f6fa;
+    margin: 0;
+    padding: 0;
+  }
+
+  .navbar {
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .navbar h3 {
+    margin: 0;
+    color: #333;
+    font-size: 20px;
+  }
+
+  .navbar button {
+    padding: 8px 16px;
+    border: 1px solid #ddd;
+    background: #fff;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+
+  .navbar button:hover {
+    background: #f0f0f0;
+  }
+
+  .navbar button.primary {
+    background: #d46db9;
+    color: #fff;
+    border-color: #d46db9;
+  }
+
+  .navbar button.primary:hover {
+    background: #ef62d5;
+  }
+
+  #cartList {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 0 20px;
+  }
+
+  .cart-item {
+    background: #fff;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,.06);
+  }
+
+  .cart-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+  }
+
+  .cart-item span {
+    flex: 1;
+    font-size: 16px;
+    color: #333;
+    cursor: pointer;
+  }
+
+  .cart-item span:hover {
+    color: #d46db9;
+  }
+
+  .cart-item .controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .cart-item button {
+    width: 32px;
+    height: 32px;
+    border: 1px solid #ddd;
+    background: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+
+  .cart-item button:hover {
+    background: #f0f0f0;
+  }
+
+  .cart-item button.delete {
+    background: #ff4757;
+    color: #fff;
+    border-color: #ff4757;
+  }
+
+  .cart-item button.delete:hover {
+    background: #ff3838;
+  }
+
+  .cart-footer {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 18px;
+    font-weight: bold;
+  }
+
+  .cart-footer #total {
+    color: #e74c3c;
+    font-size: 24px;
+  }
+
+  .empty-cart {
+    text-align: center;
+    padding: 60px 20px;
+    color: #999;
+  }
+
+  .loading {
+    text-align: center;
+    padding: 60px 20px;
+    color: #999;
+  }
+</style>
 </head>
 <body>
 
 <header class="navbar">
-  <button onclick="history.back()">←</button>
-  <button onclick="buySelected()">立即购买</button>
-
+  <button onclick="history.back()">← 返回</button>
   <h3>购物车</h3>
+  <button class="primary" onclick="buySelected()">立即购买</button>
 </header>
 
-<div id="cartList"></div>
-<div class="cart-footer">总价：￥<span id="total">0</span></div>
+<div id="cartList">
+  <div class="loading">加载中...</div>
+</div>
 
-<script src="cart.js"></script>
+<div class="cart-footer">
+  <span>总价：￥<span id="total">0</span></span>
+  <button class="primary" onclick="buySelected()" style="padding: 10px 24px; border: none;">结算</button>
+</div>
+
+<script>
+  const API_BASE = "http://localhost:3000/api";
+  let cartData = []; // 存储购物车数据
+
+  /**********************
+   * 加载购物车数据
+   **********************/
+  async function loadCart() {
+    const userId = localStorage.getItem("userId");
+    const token = localStorage.getItem("token");
+
+    if (!userId || !token) {
+      alert("请先登录");
+      location.href = "index.html";
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/cart/${userId}`, {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      if (!res.ok) {
+        throw new Error("加载购物车失败");
+      }
+
+      cartData = await res.json();
+      
+      // 为每个商品添加 checked 属性（默认选中）
+      cartData = cartData.map(item => ({
+        ...item,
+        checked: true
+      }));
+
+      render();
+
+    } catch (err) {
+      console.error(err);
+      document.getElementById("cartList").innerHTML = 
+        '<div class="empty-cart">加载失败，请稍后重试</div>';
+    }
+  }
+
+  /**********************
+   * 渲染购物车
+   **********************/
+  function render() {
+    const cartList = document.getElementById("cartList");
+    
+    if (cartData.length === 0) {
+      cartList.innerHTML = '<div class="empty-cart">购物车是空的</div>';
+      document.getElementById("total").innerText = "0";
+      return;
+    }
+
+    let sum = 0;
+
+    cartList.innerHTML = cartData.map((item, idx) => {
+      // 只统计勾选商品金额
+      if (item.checked) {
+        sum += item.price * item.quantity;
+      }
+
+      return `
+        <div class="cart-item">
+          <input type="checkbox"
+            ${item.checked ? "checked" : ""}
+            onchange="toggleCheck(${idx}, this.checked)"
+          >
+          <span onclick="location.href='product.html?id=${item.product_id}'">
+            ${item.name} - ¥${item.price}
+          </span>
+          <div class="controls">
+            <button onclick="changeQuantity(${idx}, -1)">-</button>
+            <span>${item.quantity}</span>
+            <button onclick="changeQuantity(${idx}, 1)">+</button>
+            <button class="delete" onclick="deleteItem(${idx})">🗑</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    document.getElementById("total").innerText = sum.toFixed(2);
+  }
+
+  /**********************
+   * 勾选 / 取消勾选
+   **********************/
+  function toggleCheck(index, checked) {
+    cartData[index].checked = checked;
+    render();
+  }
+
+  /**********************
+   * 修改数量
+   **********************/
+  async function changeQuantity(index, delta) {
+    const item = cartData[index];
+    const newQuantity = item.quantity + delta;
+
+    if (newQuantity <= 0) {
+      // 数量为0，删除商品
+      deleteItem(index);
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+
+    try {
+      const res = await fetch(`${API_BASE}/cart/${item.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ quantity: newQuantity })
+      });
+
+      if (!res.ok) {
+        throw new Error("更新失败");
+      }
+
+      // 更新本地数据
+      cartData[index].quantity = newQuantity;
+      render();
+
+    } catch (err) {
+      console.error(err);
+      alert("更新数量失败");
+    }
+  }
+
+  /**********************
+   * 删除商品
+   **********************/
+  async function deleteItem(index) {
+    if (!confirm("确定要删除这个商品吗？")) {
+      return;
+    }
+
+    const item = cartData[index];
+    const token = localStorage.getItem("token");
+
+    try {
+      const res = await fetch(`${API_BASE}/cart/${item.id}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      if (!res.ok) {
+        throw new Error("删除失败");
+      }
+
+      // 从本地数据中移除
+      cartData.splice(index, 1);
+      render();
+
+    } catch (err) {
+      console.error(err);
+      alert("删除失败");
+    }
+  }
+
+  /**********************
+   * ✅ 立即购买（创建订单）
+   **********************/
+  async function buySelected() {
+    const selected = cartData.filter(item => item.checked);
+
+    if (selected.length === 0) {
+      alert("请选择要购买的商品");
+      return;
+    }
+
+    const userId = localStorage.getItem("userId");
+    const token = localStorage.getItem("token");
+
+    if (!userId || !token) {
+      alert("请先登录");
+      location.href = "index.html";
+      return;
+    }
+
+    // 禁用按钮防止重复提交
+    const buttons = document.querySelectorAll('.primary');
+    buttons.forEach(btn => {
+      btn.disabled = true;
+      btn.textContent = "提交中...";
+    });
+
+    try {
+      // ✅ 调用后端创建订单API
+      const res = await fetch(`${API_BASE}/orders`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ user_id: userId })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "下单失败");
+      }
+
+      // ✅ 订单创建成功
+      alert(`购买成功！订单号：${data.order_id}\n总金额：￥${document.getElementById("total").innerText}`);
+      
+      // 重新加载购物车（购物车应该已被清空）
+      await loadCart();
+
+    } catch (err) {
+      console.error(err);
+      alert(err.message || "下单失败，请稍后重试");
+      
+      // 恢复按钮状态
+      buttons.forEach(btn => {
+        btn.disabled = false;
+        btn.textContent = btn.classList.contains('navbar') ? "立即购买" : "结算";
+      });
+    }
+  }
+
+  // 页面加载时执行
+  loadCart();
+</script>
+
 </body>
 </html>
